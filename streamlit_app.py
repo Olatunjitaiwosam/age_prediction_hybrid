@@ -166,6 +166,42 @@ class Config:
                 key = ""
         return key
 
+    @staticmethod
+    def _secret_or_env(name: str, default: str = "") -> str:
+        val = os.environ.get(name, "")
+        if val:
+            return val
+        try:
+            val = st.secrets.get(name, "")
+        except Exception:
+            val = ""
+        return val or default
+
+    @staticmethod
+    def get_rtc_configuration() -> dict:
+        """Build WebRTC ICE configuration from env/secrets for better connectivity."""
+        stun_csv = Config._secret_or_env(
+            "STUN_URLS",
+            "stun:stun.l.google.com:19302,stun:stun1.l.google.com:19302"
+        )
+        stun_urls = [u.strip() for u in stun_csv.split(",") if u.strip()]
+
+        ice_servers = []
+        if stun_urls:
+            ice_servers.append({"urls": stun_urls})
+
+        turn_url = Config._secret_or_env("TURN_URL", "")
+        turn_username = Config._secret_or_env("TURN_USERNAME", "")
+        turn_password = Config._secret_or_env("TURN_PASSWORD", "")
+        if turn_url and turn_username and turn_password:
+            ice_servers.append({
+                "urls": [turn_url],
+                "username": turn_username,
+                "credential": turn_password,
+            })
+
+        return {"iceServers": ice_servers, "iceTransportPolicy": "all"}
+
 
 # ─── Model Definitions (must match training architecture) ──────────────────
 class AgePredictionCNN(nn.Module):
@@ -906,12 +942,17 @@ def _webcam_mode(detector, model, device, conf, use_vlm, api_key):
         if not HAS_WEBRTC:
             st.error("streamlit-webrtc is not installed. Run: pip install streamlit-webrtc aiortc av")
         else:
+            rtc_config = Config.get_rtc_configuration()
+            has_turn = any("username" in s for s in rtc_config.get("iceServers", []))
             st.info("Age detection runs on every frame in real-time. Green box = adult (allow), Red box = minor (restrict).")
+            if not has_turn:
+                st.caption("Using public STUN only. If live stream connection is slow or fails, set TURN_URL, TURN_USERNAME, and TURN_PASSWORD in app secrets.")
             ctx = webrtc_streamer(
                 key="age-live",
                 mode=WebRtcMode.SENDRECV,
                 video_processor_factory=AgeVideoProcessor,
                 media_stream_constraints={"video": True, "audio": False},
+                rtc_configuration=rtc_config,
                 async_processing=True,
             )
             if ctx.video_processor:
