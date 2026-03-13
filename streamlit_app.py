@@ -254,7 +254,7 @@ def _is_valid_model_file(path: str, min_bytes: int = 1 << 20) -> bool:
 
 
 def _gh_download(url: str, dest_path: str, label: str) -> bool:
-    """Download a file from a GitHub Release URL with progress display."""
+    """Download a file from a GitHub Release URL silently."""
     if os.path.exists(dest_path):
         if _is_valid_model_file(dest_path):
             return True
@@ -262,19 +262,13 @@ def _gh_download(url: str, dest_path: str, label: str) -> bool:
         os.remove(dest_path)
     os.makedirs(os.path.dirname(dest_path), exist_ok=True)
     try:
-        st.info(f"⬇️  Downloading {label} …")
         with requests.get(url, stream=True, timeout=300, allow_redirects=True) as r:
             r.raise_for_status()
-            total = int(r.headers.get("content-length", 0))
-            bar = st.progress(0, text=f"Downloading {label}…")
-            downloaded = 0
             with open(dest_path, "wb") as f:
                 for chunk in r.iter_content(chunk_size=1 << 20):
+                    if not chunk:
+                        continue
                     f.write(chunk)
-                    downloaded += len(chunk)
-                    if total:
-                        bar.progress(min(downloaded / total, 1.0), text=f"Downloading {label}… {downloaded>>20}MB/{total>>20}MB")
-            bar.empty()
         return os.path.exists(dest_path)
     except Exception as e:
         logger.warning(f"GitHub download failed for {label}: {e}")
@@ -577,7 +571,6 @@ def _ensure_models(model_dir: str):
     ]
     if not needed:
         return
-    st.info(f"📦 Downloading {len(needed)} model file(s) from GitHub Releases…")
     for fname, url in needed:
         dest = os.path.join(model_dir, fname)
         ok = _gh_download(url, dest, fname)
@@ -599,7 +592,10 @@ def main():
     st.title("🔬 Age Verification System v2.0")
     st.caption("YOLO Multi-Face Detection → CNN Age Prediction → VLM Per-Face Reasoning")
 
-    # Auto-download model weights from GitHub Releases if not present locally
+    app_status = st.empty()
+    app_status.info("Loading app...")
+
+    # Auto-download model weights from GitHub Releases if not present locally.
     _ensure_models(Config.MODEL_DIR)
 
     # ── Sidebar ──────────────────────────────────────────────────────────
@@ -658,9 +654,11 @@ def main():
     # ── Load Models ───────────────────────────────────────────────────────
     device_str = "cuda" if torch.cuda.is_available() else "cpu"
 
-    with st.spinner("Loading models …"):
+    with st.spinner("Loading app..."):
         cnn_model, device = load_cnn_model(backbone, cnn_path_input, device_str)
         yolo_model = load_yolo_model(yolo_path_input)
+
+    app_status.success("Ready for use")
 
     cnn_ok   = os.path.exists(cnn_path_input)
     yolo_ok  = yolo_model is not None
