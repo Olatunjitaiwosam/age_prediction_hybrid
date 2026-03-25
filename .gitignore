@@ -11,14 +11,21 @@ venv/
 .venv/
 env/
 
-# Models and uploads (large binary files)
+# Models and uploads (large binary files — downloaded at runtime)
 flask_app/models/
 flask_app/uploads/
+models/*.pth
+models/*.pt
 
 # Environment secrets
 .env
 *.pem
 *.key
+.streamlit/secrets.toml
+
+# Uploads / temp
+static/uploads/
+/tmp/
 
 # OS
 .DS_Store
