@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>SpiritShop | Premium Spirits</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif:wght@400;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script>
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        colors: {
+          "primary": "#361f1a", "primary-container": "#4e342e",
+          "secondary": "#735c00", "secondary-container": "#fed65b",
+          "surface": "#fff9ea", "surface-container-low": "#faf4dd",
+          "surface-container": "#f5eed7", "surface-container-high": "#efe8d2",
+          "surface-container-highest": "#e9e2cc", "background": "#fff9ea",
+          "on-surface": "#1e1c0e", "on-surface-variant": "#504442",
+          "outline-variant": "#d4c3bf", "outline": "#827471",
+          "on-primary": "#ffffff", "on-primary-container": "#c19c94",
+        },
+        fontFamily: { "headline": ["Noto Serif"], "body": ["Manrope"] },
+        borderRadius: { "DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem" },
+      }
+    }
+  }
+</script>
+<style>
+  body { background: #fff9ea; font-family: 'Manrope', sans-serif; color: #1e1c0e; }
+  .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+</style>
+</head>
+<body class="bg-background text-on-surface">
+
+<!-- Nav -->
+<nav class="fixed top-0 w-full z-50 bg-surface-container-low border-b border-outline-variant shadow-sm">
+  <div class="max-w-[1400px] mx-auto px-8 h-16 flex items-center justify-between">
+    <div class="font-headline text-xl font-bold text-primary tracking-tight">SpiritShop</div>
+    <div class="hidden lg:flex items-center gap-8 text-sm text-on-surface-variant">
+      <a href="#" class="hover:text-on-surface transition-colors">Whiskey</a>
+      <a href="#" class="hover:text-on-surface transition-colors">Gin</a>
+      <a href="#" class="hover:text-on-surface transition-colors">Wine</a>
+      <a href="#" class="hover:text-on-surface transition-colors">Rum</a>
+      <a href="#" class="hover:text-on-surface transition-colors">Collections</a>
+    </div>
+    <div class="flex items-center gap-3">
+      <a href="/spiritshop/signin" class="bg-primary text-on-primary text-sm font-bold px-6 py-2.5 rounded hover:bg-primary-container transition-colors">
+        Sign In / Verify Age
+      </a>
+    </div>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="min-h-screen flex items-center pt-16 bg-primary-container">
+  <div class="max-w-[1400px] mx-auto px-8 py-24 grid lg:grid-cols-2 gap-12 items-center">
+    <div class="text-white">
+      <div class="inline-flex items-center gap-2 bg-white/10 rounded-full px-4 py-2 mb-8">
+        <span class="material-symbols-outlined text-sm">18_up_rating</span>
+        <span class="text-xs uppercase tracking-widest font-semibold">Age Verified Platform · 18+</span>
+      </div>
+      <h1 class="font-headline text-7xl lg:text-9xl font-bold tracking-tighter leading-none mb-6">
+        SPIRIT<br/>SHOP
+      </h1>
+      <p class="text-white/70 text-lg leading-relaxed max-w-md mb-10">
+        Curated selection for the refined palate. Our collection requires patience, craft, and age. Premium spirits delivered to your door.
+      </p>
+      <div class="flex flex-col sm:flex-row gap-4">
+        <a href="/spiritshop/signin" class="bg-secondary-container text-on-surface font-bold text-sm px-8 py-4 rounded text-center hover:bg-yellow-400 transition-colors">
+          Browse Collection
+        </a>
+        <a href="#featured" class="border border-white/30 text-white text-sm font-semibold px-8 py-4 rounded hover:bg-white/10 transition-colors text-center">
+          Learn More
+        </a>
+      </div>
+    </div>
+    <div class="hidden lg:block">
+      <div class="bg-white/10 rounded-xl p-8 border border-white/20 backdrop-blur-sm">
+        <h3 class="font-headline text-xl font-bold text-white mb-6">Why SpiritShop?</h3>
+        <div class="space-y-4">
+          <div class="flex items-start gap-4">
+            <span class="material-symbols-outlined text-secondary-container text-2xl mt-0.5">verified</span>
+            <div>
+              <p class="font-semibold text-white text-sm">AI Age Verification</p>
+              <p class="text-white/60 text-xs mt-0.5">Instant face scan — no ID documents required</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-4">
+            <span class="material-symbols-outlined text-secondary-container text-2xl mt-0.5">local_shipping</span>
+            <div>
+              <p class="font-semibold text-white text-sm">Same-Day Delivery</p>
+              <p class="text-white/60 text-xs mt-0.5">Order before 2pm for same-day dispatch</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-4">
+            <span class="material-symbols-outlined text-secondary-container text-2xl mt-0.5">star</span>
+            <div>
+              <p class="font-semibold text-white text-sm">Expert Curation</p>
+              <p class="text-white/60 text-xs mt-0.5">Hand-selected from 50+ distilleries worldwide</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Featured -->
+<section id="featured" class="py-24 bg-surface-container-low border-t border-outline-variant">
+  <div class="max-w-[1400px] mx-auto px-8">
+    <h2 class="font-headline text-4xl font-bold text-on-surface mb-4 text-center">Featured Collections</h2>
+    <p class="text-on-surface-variant text-center mb-16 max-w-lg mx-auto">Age verification required. Our AI ensures compliance instantly.</p>
+    <div class="grid md:grid-cols-3 gap-8">
+      <div class="bg-surface rounded-xl p-8 border border-outline-variant shadow-sm">
+        <div class="w-12 h-12 bg-primary-container rounded-xl flex items-center justify-center mb-5">
+          <span class="material-symbols-outlined text-on-primary-container text-2xl">wine_bar</span>
+        </div>
+        <h3 class="font-headline font-bold text-xl mb-3">Single Malts</h3>
+        <p class="text-on-surface-variant text-sm leading-relaxed">Rare and aged Scotch whisky from renowned distilleries. From 12-year to 30-year expressions.</p>
+        <a href="/spiritshop/signin" class="mt-5 inline-block text-sm font-semibold text-primary underline hover:text-primary-container">Browse →</a>
+      </div>
+      <div class="bg-surface rounded-xl p-8 border border-outline-variant shadow-sm">
+        <div class="w-12 h-12 bg-secondary-container rounded-xl flex items-center justify-center mb-5">
+          <span class="material-symbols-outlined text-on-surface text-2xl">local_bar</span>
+        </div>
+        <h3 class="font-headline font-bold text-xl mb-3">Craft Gin</h3>
+        <p class="text-on-surface-variant text-sm leading-relaxed">Botanical gins from small-batch distillers. Juniper-forward to floral — a gin for every palate.</p>
+        <a href="/spiritshop/signin" class="mt-5 inline-block text-sm font-semibold text-primary underline hover:text-primary-container">Browse →</a>
+      </div>
+      <div class="bg-surface rounded-xl p-8 border border-outline-variant shadow-sm">
+        <div class="w-12 h-12 bg-surface-container-highest rounded-xl flex items-center justify-center mb-5">
+          <span class="material-symbols-outlined text-on-surface-variant text-2xl">liquor</span>
+        </div>
+        <h3 class="font-headline font-bold text-xl mb-3">Premium Rum</h3>
+        <p class="text-on-surface-variant text-sm leading-relaxed">Caribbean and Latin American rums aged to perfection. Sipping rums and cocktail essentials.</p>
+        <a href="/spiritshop/signin" class="mt-5 inline-block text-sm font-semibold text-primary underline hover:text-primary-container">Browse →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="py-24 bg-primary text-white text-center">
+  <div class="max-w-2xl mx-auto px-8">
+    <h2 class="font-headline text-5xl font-bold mb-6">Shop with Confidence</h2>
+    <p class="text-white/70 mb-10">Quick AI age verification. No ID cards. No waiting. Just your face and you're in.</p>
+    <a href="/spiritshop/signin" class="inline-block bg-secondary-container text-on-surface font-bold text-sm px-12 py-5 rounded uppercase tracking-wider hover:bg-yellow-400 transition-colors">
+      Verify Age & Shop Now
+    </a>
+  </div>
+</section>
+
+</body>
+</html>

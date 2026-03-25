@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AdultVault | Age Verification</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script>
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        colors: {
+          "surface": "#131313", "primary": "#ffb3b3", "primary-container": "#dc143c",
+          "on-primary-container": "#fff1f0", "surface-container-lowest": "#0e0e0e",
+          "surface-container-low": "#1b1b1b", "surface-container": "#1f1f1f",
+          "surface-container-high": "#2a2a2a", "on-surface": "#e2e2e2",
+          "on-surface-variant": "#e6bdbc", "outline-variant": "#5c3f3f", "outline": "#ac8888",
+          "tertiary": "#78d6d5",
+        },
+        fontFamily: { "body": ["Inter"] },
+        borderRadius: { "DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem" },
+      }
+    }
+  }
+</script>
+<style>
+  body { background: #0e0e0e; font-family: 'Inter', sans-serif; }
+  .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 200, 'GRAD' 0, 'opsz' 24; vertical-align: middle; }
+  .scanning-line { height: 2px; background: #dc143c; width: 100%; position: absolute; z-index: 10; box-shadow: 0 0 15px #dc143c; animation: scan 3s ease-in-out infinite; }
+  @keyframes scan { 0%, 100% { top: 0%; } 50% { top: 100%; } }
+  .spinner { border: 3px solid #2a2a2a; border-top-color: #dc143c; border-radius: 50%; width: 28px; height: 28px; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  select, input[type=range] { background: #131313; border: 1px solid #5c3f3f; color: #e2e2e2; border-radius: 6px; padding: 8px 10px; width: 100%; outline: none; }
+  select:focus { border-color: #dc143c; }
+  input[type=range] { accent-color: #dc143c; }
+</style>
+</head>
+<body class="bg-surface-container-lowest text-on-surface min-h-screen flex flex-col">
+
+<!-- Compliance Banner -->
+<div class="w-full bg-[#93000a] text-[#ffdad6] py-3 px-6 flex items-center justify-center gap-3 z-[60]">
+  <span class="material-symbols-outlined" style="font-variation-settings:'FILL' 1; font-size:18px">warning</span>
+  <span class="font-label text-xs uppercase tracking-[0.15em] font-bold">Regulatory Compliance Requirement: USCS 2257 Age Verification Active</span>
+</div>
+
+<main class="flex-grow flex items-center justify-center px-4 py-12">
+  <div class="w-full max-w-[1100px] grid md:grid-cols-2 bg-surface-container shadow-[0_32px_64px_-12px_rgba(0,0,0,0.6)] overflow-hidden rounded-xl border border-outline-variant/10">
+
+    <!-- Left: Branding -->
+    <div class="hidden md:flex flex-col justify-between p-12 bg-surface relative overflow-hidden">
+      <div class="relative z-10">
+        <a href="/adultvault" class="text-2xl font-black tracking-tighter text-on-surface uppercase mb-12 block">AdultVault</a>
+        <h1 class="text-4xl font-black tracking-tight leading-tight mb-6">THE GOLD STANDARD IN <span class="text-primary-container">COMPLIANCE</span>.</h1>
+        <p class="text-on-surface-variant leading-relaxed max-w-sm mb-8">
+          Accessing the AdultVault ecosystem requires verified maturity credentials. We prioritize your privacy through biometric hashing that never stores your image.
+        </p>
+        <div class="space-y-4">
+          <div class="flex items-center gap-3 text-sm text-on-surface-variant">
+            <span class="material-symbols-outlined text-primary-container">encrypted</span><span>End-to-End Encryption</span>
+          </div>
+          <div class="flex items-center gap-3 text-sm text-on-surface-variant">
+            <span class="material-symbols-outlined text-primary-container">privacy_tip</span><span>Zero-Knowledge Storage</span>
+          </div>
+          <div class="flex items-center gap-3 text-sm text-on-surface-variant">
+            <span class="material-symbols-outlined text-primary-container">face</span><span>AI-Powered Biometric Verification</span>
+          </div>
+        </div>
+      </div>
+      <div class="absolute -bottom-24 -left-24 w-64 h-64 bg-primary-container/5 rounded-full blur-3xl"></div>
+    </div>
+
+    <!-- Right: Verification Widget -->
+    <div class="p-8 md:p-12 bg-surface-container-low flex flex-col">
+      <div class="mb-8">
+        <div class="font-label text-[10px] uppercase tracking-widest text-primary-container font-bold mb-2">Step 01: Identity Confirmation</div>
+        <h2 class="text-2xl font-bold tracking-tight">Biometric Verification</h2>
+      </div>
+
+      <!-- Settings row -->
+      <div class="grid grid-cols-2 gap-3 mb-5">
+        <div>
+          <label class="text-xs text-on-surface-variant mb-1 block uppercase tracking-wider">AI Model</label>
+          <select id="backbone">
+            <option value="densenet">DenseNet201</option>
+            <option value="resnet50">ResNet50</option>
+            <option value="efficientnet_v2">EfficientNet-v2</option>
+            <option value="convnext">ConvNeXt</option>
+            <option value="vit-base">ViT-Base</option>
+            <option value="vit-tiny">ViT-Tiny</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-xs text-on-surface-variant mb-1 block uppercase tracking-wider">Confidence: <span id="conf-val">0.35</span></label>
+          <input type="range" id="conf" min="0.10" max="0.90" step="0.05" value="0.35"/>
+        </div>
+      </div>
+
+      <!-- Camera widget -->
+      <div class="relative w-full bg-surface-container-lowest rounded-lg border border-outline-variant/20 mb-6 flex flex-col items-center justify-center overflow-hidden" style="aspect-ratio:4/3;">
+        <div class="scanning-line" id="scan-line"></div>
+        <video id="cam-video" autoplay playsinline muted class="w-full h-full object-cover hidden"></video>
+        <canvas id="cam-canvas" class="w-full h-full object-cover hidden"></canvas>
+        <img id="cam-result" class="w-full h-full object-cover hidden"/>
+
+        <div id="cam-placeholder" class="relative z-20 flex flex-col items-center text-center px-6">
+          <div class="w-16 h-16 rounded-full border-2 border-primary-container/30 flex items-center justify-center mb-4 bg-surface/50 backdrop-blur-md">
+            <span class="material-symbols-outlined text-primary-container text-3xl animate-pulse">face</span>
+          </div>
+          <div class="text-on-surface font-bold text-sm uppercase tracking-widest mb-1">Awaiting Scan</div>
+          <div class="text-[10px] text-on-surface-variant/70 uppercase">Position face in frame</div>
+        </div>
+        <div class="absolute bottom-4 left-4 right-4 flex justify-between items-end z-10">
+          <div class="text-[9px] font-mono text-on-surface-variant/40 leading-none">SYS_ID: AV_88291<br/>ENCRYPTED_TUNNEL</div>
+          <div class="flex gap-1">
+            <div class="w-1 h-3 bg-primary-container animate-pulse"></div>
+            <div class="w-1 h-3 bg-primary-container/40"></div>
+            <div class="w-1 h-3 bg-primary-container animate-pulse"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Upload option -->
+      <div class="mb-4">
+        <div class="flex items-center gap-2 mb-2 text-xs text-on-surface-variant uppercase tracking-wider font-semibold">
+          <span class="flex-1 border-t border-outline-variant/30"></span>OR UPLOAD IMAGE<span class="flex-1 border-t border-outline-variant/30"></span>
+        </div>
+        <label class="flex items-center justify-center gap-2 border border-outline-variant/40 rounded-lg p-3 cursor-pointer hover:border-primary-container transition-colors text-sm text-on-surface-variant hover:text-on-surface">
+          <span class="material-symbols-outlined text-sm">upload_file</span> Choose Image
+          <input type="file" id="upload-file" accept=".png,.jpg,.jpeg,.webp,.bmp" class="hidden"/>
+        </label>
+      </div>
+
+      <!-- Buttons -->
+      <div class="flex gap-3 mb-6">
+        <button id="btn-start-cam" class="flex-1 py-3 bg-surface-container-high text-on-surface text-sm font-semibold rounded uppercase tracking-wider hover:bg-surface-container transition-colors">
+          <span class="material-symbols-outlined text-sm mr-1">videocam</span> Camera
+        </button>
+        <button id="btn-capture" class="flex-1 py-3 bg-primary-container text-on-primary-container text-sm font-bold rounded uppercase tracking-wider hover:bg-[#b01030] transition-colors" disabled>
+          <span class="material-symbols-outlined text-sm mr-1">photo_camera</span> Capture
+        </button>
+        <button id="btn-verify" class="flex-1 py-3 bg-primary-container text-on-primary-container text-sm font-bold rounded uppercase tracking-wider hover:bg-[#b01030] transition-colors hidden">
+          <span class="material-symbols-outlined text-sm mr-1">verified</span> Verify
+        </button>
+      </div>
+
+      <!-- Loading -->
+      <div id="loading" class="hidden flex items-center gap-3 mb-4 text-sm text-on-surface-variant">
+        <div class="spinner"></div> <span>Verifying age…</span>
+      </div>
+
+      <!-- Result -->
+      <div id="result-allow" class="hidden rounded-xl p-5 bg-[#14532d]/60 border border-green-700/40 text-center mb-4">
+        <span class="material-symbols-outlined text-green-400 text-5xl" style="font-variation-settings:'FILL' 1">check_circle</span>
+        <h3 class="text-xl font-black text-green-300 mt-2 uppercase">Access Granted</h3>
+        <p id="result-age-allow" class="text-green-400 text-sm mt-1"></p>
+        <a href="/adultvault" class="mt-4 inline-block px-8 py-3 bg-green-700 text-white text-sm font-bold rounded uppercase tracking-wider hover:bg-green-600 transition-colors">Enter AdultVault</a>
+      </div>
+
+      <div id="result-restrict" class="hidden rounded-xl p-5 bg-[#450a0a]/60 border border-red-900/40 text-center mb-4">
+        <span class="material-symbols-outlined text-red-400 text-5xl" style="font-variation-settings:'FILL' 1">block</span>
+        <h3 class="text-xl font-black text-red-300 mt-2 uppercase">Access Denied</h3>
+        <p id="result-age-restrict" class="text-red-400 text-sm mt-1"></p>
+        <p class="text-xs text-on-surface-variant mt-3">You must be 18 or older to access this platform.</p>
+      </div>
+
+      <!-- Age Group Analysis (shown after result) -->
+      <div id="analysis-panel" class="hidden">
+        <div class="border-t border-outline-variant/20 pt-4 mt-2">
+          <p class="text-[10px] uppercase tracking-widest text-on-surface-variant font-semibold mb-3">Scan Analysis</p>
+          <div class="grid grid-cols-3 gap-2 mb-3">
+            <div class="bg-[#1e3a5f] rounded-lg p-3 text-center">
+              <div id="av-count-child" class="text-2xl font-black text-blue-400">—</div>
+              <div class="text-[10px] text-blue-300 uppercase tracking-wider">Children</div>
+            </div>
+            <div class="bg-[#3b2a0a] rounded-lg p-3 text-center">
+              <div id="av-count-teen" class="text-2xl font-black text-yellow-400">—</div>
+              <div class="text-[10px] text-yellow-300 uppercase tracking-wider">Teens</div>
+            </div>
+            <div class="bg-[#14532d] rounded-lg p-3 text-center">
+              <div id="av-count-adult" class="text-2xl font-black text-green-400">—</div>
+              <div class="text-[10px] text-green-300 uppercase tracking-wider">Adults</div>
+            </div>
+          </div>
+          <div class="text-xs text-on-surface-variant text-center">
+            Avg Age: <span id="av-avg-age" class="text-on-surface font-semibold">—</span> &nbsp;·&nbsp;
+            Faces: <span id="av-total-faces" class="text-on-surface font-semibold">—</span>
+          </div>
+        </div>
+      </div>
+
+      <p class="text-[10px] text-on-surface-variant/50 text-center mt-auto pt-4">
+        Your biometric data is processed locally and immediately discarded. We comply with GDPR, CCPA, and USCS 2257.
+      </p>
+    </div>
+  </div>
+</main>
+
+<script>
+let stream = null;
+let capturedB64 = null;
+let uploadedFile = null;
+
+const confSlider = document.getElementById('conf');
+confSlider.addEventListener('input', () => document.getElementById('conf-val').textContent = parseFloat(confSlider.value).toFixed(2));
+
+document.getElementById('btn-start-cam').addEventListener('click', async () => {
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ video: true });
+    const vid = document.getElementById('cam-video');
+    vid.srcObject = stream;
+    vid.classList.remove('hidden');
+    document.getElementById('cam-placeholder').classList.add('hidden');
+    document.getElementById('btn-capture').disabled = false;
+  } catch(e) { alert('Camera access denied: ' + e.message); }
+});
+
+document.getElementById('btn-capture').addEventListener('click', () => {
+  const vid = document.getElementById('cam-video');
+  const canvas = document.getElementById('cam-canvas');
+  canvas.width = vid.videoWidth; canvas.height = vid.videoHeight;
+  canvas.getContext('2d').drawImage(vid, 0, 0);
+  capturedB64 = canvas.toDataURL('image/jpeg', 0.92);
+  document.getElementById('cam-result').src = capturedB64;
+  document.getElementById('cam-result').classList.remove('hidden');
+  vid.classList.add('hidden');
+  document.getElementById('btn-verify').classList.remove('hidden');
+  document.getElementById('btn-capture').classList.add('hidden');
+  if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
+});
+
+document.getElementById('upload-file').addEventListener('change', function() {
+  if (!this.files[0]) return;
+  uploadedFile = this.files[0];
+  const reader = new FileReader();
+  reader.onload = e => {
+    capturedB64 = e.target.result;
+    document.getElementById('cam-result').src = capturedB64;
+    document.getElementById('cam-result').classList.remove('hidden');
+    document.getElementById('cam-placeholder').classList.add('hidden');
+    document.getElementById('cam-video').classList.add('hidden');
+    document.getElementById('btn-verify').classList.remove('hidden');
+  };
+  reader.readAsDataURL(uploadedFile);
+});
+
+document.getElementById('btn-verify').addEventListener('click', async () => {
+  if (!capturedB64 && !uploadedFile) return;
+  document.getElementById('loading').classList.remove('hidden');
+  ['result-allow','result-restrict','analysis-panel'].forEach(id => document.getElementById(id).classList.add('hidden'));
+
+  const fd = new FormData();
+  if (uploadedFile) {
+    fd.append('file', uploadedFile);
+  } else {
+    const blob = await (await fetch(capturedB64)).blob();
+    fd.append('file', new File([blob], 'capture.jpg', { type: 'image/jpeg' }));
+  }
+  fd.append('backbone', document.getElementById('backbone').value);
+  fd.append('conf', document.getElementById('conf').value);
+
+  try {
+    const resp = await fetch('/api/predict', { method: 'POST', body: fd });
+    const data = await resp.json();
+    document.getElementById('loading').classList.add('hidden');
+
+    if (data.error) { alert('Error: ' + data.error); return; }
+
+    const s = data.summary;
+    if (s) {
+      document.getElementById('av-count-child').textContent = s.counts.child;
+      document.getElementById('av-count-teen').textContent = s.counts.teen;
+      document.getElementById('av-count-adult').textContent = s.counts.adult;
+      document.getElementById('av-avg-age').textContent = s.avg_age + ' yr';
+      document.getElementById('av-total-faces').textContent = s.total_faces;
+      document.getElementById('analysis-panel').classList.remove('hidden');
+
+      if (s.overall_decision === 'allow') {
+        document.getElementById('result-allow').classList.remove('hidden');
+        document.getElementById('result-age-allow').textContent = `Detected age: ${s.avg_age} yrs — Adult (18+)`;
+      } else {
+        document.getElementById('result-restrict').classList.remove('hidden');
+        document.getElementById('result-age-restrict').textContent = `Detected minor(s): ${s.counts.child + s.counts.teen} face(s) under 18`;
+      }
+
+      if (data.annotated_b64) {
+        document.getElementById('cam-result').src = 'data:image/jpeg;base64,' + data.annotated_b64;
+      }
+    }
+  } catch(e) {
+    document.getElementById('loading').classList.add('hidden');
+    alert('Request failed: ' + e.message);
+  }
+});
+</script>
+</body>
+</html>

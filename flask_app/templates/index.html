@@ -1,0 +1,796 @@
+{% extends "base.html" %}
+{% block title %}Age Verification System v2.0{% endblock %}
+
+{% block body %}
+<div class="min-h-screen flex flex-col">
+
+  <!-- ── Navbar ── -->
+  <nav class="fixed top-0 w-full z-50 bg-[#0f1117] border-b border-[#2a2d3a] shadow-lg">
+    <div class="flex items-center justify-between px-6 h-14 max-w-screen-2xl mx-auto">
+      <div class="flex items-center gap-3">
+        <span class="material-symbols-outlined text-[#00bfae]" style="font-size:22px">biotech</span>
+        <span class="font-bold text-lg tracking-tight text-white">Age<span class="text-[#00bfae]">Verify</span></span>
+        <span class="text-xs text-gray-500 ml-2">v2.0</span>
+      </div>
+      <div class="flex items-center gap-4 text-sm text-gray-400">
+        <span class="text-xs bg-[#1a1d27] border border-[#2a2d3a] px-3 py-1 rounded-full">
+          Device: <span class="text-[#00bfae] font-mono font-semibold">{{ device }}</span>
+        </span>
+        <a href="/adultvault" class="hover:text-white transition-colors">AdultVault</a>
+        <a href="/royalbet" class="hover:text-white transition-colors">RoyalBet</a>
+        <a href="/spiritshop" class="hover:text-white transition-colors">SpiritShop</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ── Layout ── -->
+  <div class="flex flex-1 pt-14">
+
+    <!-- ── Sidebar ── -->
+    <aside class="w-72 flex-shrink-0 bg-[#1a1d27] border-r border-[#2a2d3a] h-[calc(100vh-56px)] sticky top-14 overflow-y-auto p-5 space-y-5">
+
+      <div>
+        <p class="text-xs uppercase tracking-widest text-gray-500 mb-3 font-semibold">Input Mode</p>
+        <div class="space-y-2">
+          <label class="flex items-center gap-3 p-3 rounded-lg cursor-pointer bg-[#0f1117] border border-[#2a2d3a] hover:border-[#00bfae] transition-colors mode-btn" data-mode="image">
+            <input type="radio" name="mode" value="image" class="accent-[#00bfae]" checked/>
+            <span class="material-symbols-outlined text-[#00bfae]" style="font-size:20px">image</span>
+            <span class="text-sm font-medium">Image Upload</span>
+          </label>
+          <label class="flex items-center gap-3 p-3 rounded-lg cursor-pointer bg-[#0f1117] border border-[#2a2d3a] hover:border-[#00bfae] transition-colors mode-btn" data-mode="video">
+            <input type="radio" name="mode" value="video" class="accent-[#00bfae]"/>
+            <span class="material-symbols-outlined text-[#00bfae]" style="font-size:20px">videocam</span>
+            <span class="text-sm font-medium">Video Upload</span>
+          </label>
+          <label class="flex items-center gap-3 p-3 rounded-lg cursor-pointer bg-[#0f1117] border border-[#2a2d3a] hover:border-[#00bfae] transition-colors mode-btn" data-mode="webcam">
+            <input type="radio" name="mode" value="webcam" class="accent-[#00bfae]"/>
+            <span class="material-symbols-outlined text-[#00bfae]" style="font-size:20px">photo_camera</span>
+            <span class="text-sm font-medium">Webcam</span>
+          </label>
+        </div>
+      </div>
+
+      <hr class="border-[#2a2d3a]"/>
+
+      <div>
+        <p class="text-xs uppercase tracking-widest text-gray-500 mb-3 font-semibold">CNN Backbone</p>
+        <select id="backbone" class="text-sm">
+          <option value="densenet">DenseNet201 (default)</option>
+          <option value="resnet50">ResNet50</option>
+          <option value="efficientnet_v2">EfficientNet-v2-M</option>
+          <option value="convnext">ConvNeXt-Base</option>
+          <option value="vit-base">ViT-Base</option>
+          <option value="vit-tiny">ViT-Tiny</option>
+        </select>
+      </div>
+
+      <div>
+        <p class="text-xs uppercase tracking-widest text-gray-500 mb-2 font-semibold">Detection Confidence</p>
+        <div class="flex items-center gap-3">
+          <input type="range" id="conf" min="0.10" max="0.90" step="0.05" value="0.35" class="flex-1"/>
+          <span id="conf-val" class="text-sm font-mono text-[#00bfae] w-10 text-right">0.35</span>
+        </div>
+      </div>
+
+      <hr class="border-[#2a2d3a]"/>
+
+      <div>
+        <div class="flex items-center justify-between mb-3">
+          <p class="text-xs uppercase tracking-widest text-gray-500 font-semibold">VLM Reasoning</p>
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" id="use-vlm" class="sr-only peer"/>
+            <div class="w-9 h-5 bg-[#2a2d3a] peer-checked:bg-[#00bfae] rounded-full transition-colors"></div>
+            <div class="absolute left-0.5 top-0.5 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-4"></div>
+          </label>
+        </div>
+        <div id="vlm-key-wrap" class="hidden">
+          <input type="password" id="openai-key" placeholder="sk-..." class="text-sm"/>
+          <p class="text-xs text-gray-500 mt-1">OpenAI API key for GPT-4V</p>
+        </div>
+      </div>
+
+      <hr class="border-[#2a2d3a]"/>
+
+      <div id="video-options" class="hidden">
+        <p class="text-xs uppercase tracking-widest text-gray-500 mb-2 font-semibold">Max Frames</p>
+        <input type="number" id="max-frames" value="150" min="30" max="500" step="10" class="text-sm"/>
+      </div>
+
+      <div>
+        <p class="text-xs uppercase tracking-widest text-gray-500 mb-2 font-semibold">Models</p>
+        <button id="btn-model-status" class="btn-secondary w-full text-sm py-2">Check Status</button>
+        <div id="model-status-panel" class="mt-2 hidden space-y-1 text-xs"></div>
+      </div>
+
+    </aside>
+
+    <!-- ── Main Content ── -->
+    <main class="flex-1 p-6 overflow-y-auto min-h-[calc(100vh-56px)]">
+
+      <!-- ── IMAGE MODE ── -->
+      <section id="panel-image">
+        <h2 class="text-xl font-bold mb-4 text-white">Image Analysis</h2>
+        <div id="drop-zone" class="border-2 border-dashed border-[#2a2d3a] rounded-xl p-10 text-center cursor-pointer hover:border-[#00bfae] transition-colors mb-4">
+          <span class="material-symbols-outlined text-4xl text-gray-500 mb-2">upload_file</span>
+          <p class="text-gray-400 text-sm mt-2">Drop image here or <span class="text-[#00bfae] underline cursor-pointer" id="browse-link">browse</span></p>
+          <p class="text-gray-600 text-xs mt-1">PNG, JPG, JPEG, WEBP, BMP · up to 200 MB</p>
+          <input type="file" id="image-file" accept=".png,.jpg,.jpeg,.webp,.bmp" class="hidden"/>
+        </div>
+        <button id="btn-analyse-image" class="btn-accent w-full" disabled>
+          <span class="material-symbols-outlined mr-1" style="font-size:18px">science</span> Analyse Image
+        </button>
+      </section>
+
+      <!-- ── VIDEO MODE ── -->
+      <section id="panel-video" class="hidden">
+        <h2 class="text-xl font-bold mb-4 text-white">Video Analysis</h2>
+        <div id="drop-zone-video" class="border-2 border-dashed border-[#2a2d3a] rounded-xl p-10 text-center cursor-pointer hover:border-[#00bfae] transition-colors mb-4">
+          <span class="material-symbols-outlined text-4xl text-gray-500 mb-2">movie</span>
+          <p class="text-gray-400 text-sm mt-2">Drop video here or <span class="text-[#00bfae] underline cursor-pointer" id="browse-video-link">browse</span></p>
+          <p class="text-gray-600 text-xs mt-1">MP4, AVI, MOV, MKV, WEBM · up to 500 MB</p>
+          <input type="file" id="video-file" accept=".mp4,.avi,.mov,.mkv,.webm" class="hidden"/>
+        </div>
+        <div id="video-preview-wrap" class="hidden mb-4">
+          <video id="video-preview" controls class="w-full max-h-64 rounded-xl bg-black"></video>
+        </div>
+        <button id="btn-analyse-video" class="btn-accent w-full" disabled>
+          <span class="material-symbols-outlined mr-1" style="font-size:18px">play_circle</span> Analyse Video
+        </button>
+      </section>
+
+      <!-- ── WEBCAM MODE ── -->
+      <section id="panel-webcam" class="hidden">
+        <h2 class="text-xl font-bold mb-4 text-white">Webcam</h2>
+        <div class="flex gap-2 mb-4">
+          <button id="tab-capture" class="btn-accent text-sm px-4 py-2">Capture & Analyse</button>
+          <button id="tab-live" class="btn-secondary text-sm px-4 py-2">Live Stream</button>
+        </div>
+
+        <!-- Capture tab -->
+        <div id="webcam-capture">
+          <div class="relative bg-black rounded-xl overflow-hidden mb-3" style="aspect-ratio:4/3;max-height:400px">
+            <video id="capture-video" autoplay playsinline muted class="w-full h-full object-cover"></video>
+            <canvas id="capture-canvas" class="hidden"></canvas>
+          </div>
+          <div class="flex gap-2 mb-3">
+            <button id="btn-start-camera" class="btn-accent flex-1 text-sm">
+              <span class="material-symbols-outlined mr-1" style="font-size:16px">videocam</span> Start Camera
+            </button>
+            <button id="btn-take-photo" class="btn-secondary flex-1 text-sm" disabled>
+              <span class="material-symbols-outlined mr-1" style="font-size:16px">photo_camera</span> Take Photo
+            </button>
+          </div>
+          <img id="captured-preview" class="hidden w-full rounded-xl mb-3 border border-[#2a2d3a]"/>
+          <button id="btn-analyse-capture" class="btn-accent w-full hidden">
+            <span class="material-symbols-outlined mr-1" style="font-size:18px">science</span> Analyse Photo
+          </button>
+        </div>
+
+        <!-- Live tab -->
+        <div id="webcam-live" class="hidden">
+          <div class="relative bg-black rounded-xl overflow-hidden mb-3" style="aspect-ratio:4/3;max-height:400px">
+            <video id="live-video" autoplay playsinline muted class="w-full h-full object-cover hidden"></video>
+            <canvas id="live-canvas" class="w-full h-full object-cover"></canvas>
+          </div>
+          <div class="grid grid-cols-2 gap-2 mb-3">
+            <button id="btn-start-live" class="btn-accent text-sm">
+              <span class="material-symbols-outlined mr-1" style="font-size:16px">play_circle</span> Start Live
+            </button>
+            <button id="btn-stop-live" class="btn-secondary text-sm" disabled>
+              <span class="material-symbols-outlined mr-1" style="font-size:16px">stop_circle</span> Stop
+            </button>
+          </div>
+          <div id="live-face-count" class="text-xs text-gray-500 text-center"></div>
+        </div>
+      </section>
+
+      <!-- ── LOADING ── -->
+      <div id="loading-state" class="hidden mt-8 text-center">
+        <div class="spinner mx-auto mb-3"></div>
+        <p id="loading-msg" class="text-gray-400 text-sm">Processing…</p>
+        <div id="progress-wrap" class="hidden mt-3">
+          <div class="w-full bg-[#2a2d3a] rounded-full h-2">
+            <div id="progress-bar" class="bg-[#00bfae] h-2 rounded-full progress-bar" style="width:0%"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── RESULTS ── -->
+      <div id="results-section" class="hidden mt-6 space-y-6">
+
+        <!-- Annotated image -->
+        <div class="grid grid-cols-2 gap-4">
+          <div class="card p-3">
+            <p class="text-xs text-gray-500 mb-2 uppercase tracking-wider font-semibold">Original</p>
+            <img id="original-img" class="w-full rounded-lg object-cover"/>
+          </div>
+          <div class="card p-3">
+            <p class="text-xs text-gray-500 mb-2 uppercase tracking-wider font-semibold">Annotated</p>
+            <img id="annotated-img" class="w-full rounded-lg object-cover"/>
+          </div>
+        </div>
+
+        <!-- Age Group Analysis (NEW) -->
+        <div class="card p-5">
+          <div class="flex items-center gap-2 mb-4">
+            <span class="material-symbols-outlined text-[#00bfae]">analytics</span>
+            <h3 class="font-bold text-white text-base">Age Group Analysis</h3>
+          </div>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-5">
+            <div class="bg-[#0f1117] rounded-xl p-4 text-center border border-[#2a2d3a]">
+              <div id="stat-total" class="text-3xl font-black text-white">—</div>
+              <div class="text-xs text-gray-500 mt-1 font-medium uppercase tracking-wider">Total Faces</div>
+            </div>
+            <div class="bg-[#1e3a5f] rounded-xl p-4 text-center border border-[#1d4ed8]/30">
+              <div id="stat-child" class="text-3xl font-black text-blue-400">—</div>
+              <div class="text-xs text-blue-300 mt-1 font-medium uppercase tracking-wider">Children (0–12)</div>
+            </div>
+            <div class="bg-[#3b2a0a] rounded-xl p-4 text-center border border-[#d97706]/30">
+              <div id="stat-teen" class="text-3xl font-black text-yellow-400">—</div>
+              <div class="text-xs text-yellow-300 mt-1 font-medium uppercase tracking-wider">Teens (13–17)</div>
+            </div>
+            <div class="bg-[#14532d] rounded-xl p-4 text-center border border-[#15803d]/30">
+              <div id="stat-adult" class="text-3xl font-black text-green-400">—</div>
+              <div class="text-xs text-green-300 mt-1 font-medium uppercase tracking-wider">Adults (18+)</div>
+            </div>
+          </div>
+
+          <!-- Distribution bars -->
+          <div class="space-y-3 mb-5">
+            <div>
+              <div class="flex justify-between text-xs text-gray-400 mb-1">
+                <span>Children</span><span id="pct-child">0%</span>
+              </div>
+              <div class="w-full bg-[#0f1117] rounded-full h-2.5">
+                <div id="bar-child" class="bg-blue-500 h-2.5 rounded-full progress-bar" style="width:0%"></div>
+              </div>
+            </div>
+            <div>
+              <div class="flex justify-between text-xs text-gray-400 mb-1">
+                <span>Teens</span><span id="pct-teen">0%</span>
+              </div>
+              <div class="w-full bg-[#0f1117] rounded-full h-2.5">
+                <div id="bar-teen" class="bg-yellow-400 h-2.5 rounded-full progress-bar" style="width:0%"></div>
+              </div>
+            </div>
+            <div>
+              <div class="flex justify-between text-xs text-gray-400 mb-1">
+                <span>Adults</span><span id="pct-adult">0%</span>
+              </div>
+              <div class="w-full bg-[#0f1117] rounded-full h-2.5">
+                <div id="bar-adult" class="bg-green-500 h-2.5 rounded-full progress-bar" style="width:0%"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Age stats row -->
+          <div class="grid grid-cols-3 gap-3">
+            <div class="bg-[#0f1117] rounded-lg p-3 text-center border border-[#2a2d3a]">
+              <div id="stat-avg-age" class="text-xl font-bold text-[#00bfae]">—</div>
+              <div class="text-xs text-gray-500 mt-0.5">Avg Age</div>
+            </div>
+            <div class="bg-[#0f1117] rounded-lg p-3 text-center border border-[#2a2d3a]">
+              <div id="stat-min-age" class="text-xl font-bold text-[#00bfae]">—</div>
+              <div class="text-xs text-gray-500 mt-0.5">Min Age</div>
+            </div>
+            <div class="bg-[#0f1117] rounded-lg p-3 text-center border border-[#2a2d3a]">
+              <div id="stat-max-age" class="text-xl font-bold text-[#00bfae]">—</div>
+              <div class="text-xs text-gray-500 mt-0.5">Max Age</div>
+            </div>
+          </div>
+
+          <!-- Overall decision banner -->
+          <div id="overall-decision-banner" class="mt-4 rounded-xl p-3 text-center font-bold text-sm hidden"></div>
+        </div>
+
+        <!-- Per-face cards -->
+        <div>
+          <h3 class="font-bold text-white text-base mb-3">Per-Face Results</h3>
+          <div id="face-cards" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"></div>
+        </div>
+
+        <!-- Summary table -->
+        <div class="card p-5">
+          <h3 class="font-bold text-white text-base mb-3">Summary Table</h3>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="border-b border-[#2a2d3a]">
+                  <th class="text-left py-2 px-3 text-gray-500 font-semibold">Face</th>
+                  <th class="text-left py-2 px-3 text-gray-500 font-semibold">Age (CNN)</th>
+                  <th class="text-left py-2 px-3 text-gray-500 font-semibold">Group</th>
+                  <th class="text-left py-2 px-3 text-gray-500 font-semibold">Confidence</th>
+                  <th class="text-left py-2 px-3 text-gray-500 font-semibold">Decision</th>
+                  <th class="text-left py-2 px-3 text-gray-500 font-semibold">Method</th>
+                  <th class="text-left py-2 px-3 text-gray-500 font-semibold">Age (VLM)</th>
+                </tr>
+              </thead>
+              <tbody id="summary-table-body" class="divide-y divide-[#2a2d3a]"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Video download (only for video mode) -->
+        <div id="video-download-wrap" class="hidden">
+          <a id="video-download-link" href="#" class="btn-accent inline-flex items-center gap-2">
+            <span class="material-symbols-outlined" style="font-size:18px">download</span> Download Annotated Video
+          </a>
+        </div>
+
+      </div>
+
+      <!-- ── ERROR ── -->
+      <div id="error-state" class="hidden mt-6 card p-5 border-red-900/40 bg-red-950/20">
+        <div class="flex items-start gap-3">
+          <span class="material-symbols-outlined text-red-400 mt-0.5">error</span>
+          <div>
+            <p class="font-semibold text-red-300">Error</p>
+            <p id="error-msg" class="text-sm text-red-400 mt-1"></p>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────────
+let currentMode = 'image';
+let imageFile = null;
+let videoFile = null;
+let capturedImageB64 = null;
+let cameraStream = null;
+let liveStream = null;
+let liveInterval = null;
+
+// ── Mode switching ──────────────────────────────────────────────────────────
+function setMode(mode) {
+  currentMode = mode;
+  ['image','video','webcam'].forEach(m => {
+    document.getElementById(`panel-${m}`).classList.toggle('hidden', m !== mode);
+  });
+  document.getElementById('video-options').classList.toggle('hidden', mode !== 'video');
+  if (mode !== 'webcam') stopCamera();
+}
+
+document.querySelectorAll('.mode-btn').forEach(label => {
+  label.addEventListener('click', () => setMode(label.dataset.mode));
+});
+
+// ── Confidence slider ───────────────────────────────────────────────────────
+const confSlider = document.getElementById('conf');
+const confVal = document.getElementById('conf-val');
+confSlider.addEventListener('input', () => confVal.textContent = parseFloat(confSlider.value).toFixed(2));
+
+// ── VLM toggle ──────────────────────────────────────────────────────────────
+document.getElementById('use-vlm').addEventListener('change', function() {
+  document.getElementById('vlm-key-wrap').classList.toggle('hidden', !this.checked);
+});
+
+// ── Image upload ────────────────────────────────────────────────────────────
+const dropZone = document.getElementById('drop-zone');
+const imageInput = document.getElementById('image-file');
+const btnAnalyseImage = document.getElementById('btn-analyse-image');
+
+document.getElementById('browse-link').addEventListener('click', () => imageInput.click());
+dropZone.addEventListener('click', () => imageInput.click());
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('border-[#00bfae]'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('border-[#00bfae]'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault(); dropZone.classList.remove('border-[#00bfae]');
+  if (e.dataTransfer.files[0]) setImageFile(e.dataTransfer.files[0]);
+});
+imageInput.addEventListener('change', () => { if (imageInput.files[0]) setImageFile(imageInput.files[0]); });
+
+function setImageFile(file) {
+  imageFile = file;
+  dropZone.innerHTML = `
+    <span class="material-symbols-outlined text-3xl text-[#00bfae] mb-1">check_circle</span>
+    <p class="text-white font-medium mt-2">${file.name}</p>
+    <p class="text-gray-500 text-xs mt-1">${(file.size/1024/1024).toFixed(2)} MB · <span class="text-[#00bfae] underline cursor-pointer">Change</span></p>`;
+  // Re-attach the input (innerHTML replacement detaches it from the DOM)
+  dropZone.appendChild(imageInput);
+  btnAnalyseImage.disabled = false;
+}
+
+btnAnalyseImage.addEventListener('click', () => analyseImage());
+
+// ── Video upload ─────────────────────────────────────────────────────────────
+const dropZoneVideo = document.getElementById('drop-zone-video');
+const videoInput = document.getElementById('video-file');
+const btnAnalyseVideo = document.getElementById('btn-analyse-video');
+
+document.getElementById('browse-video-link').addEventListener('click', () => videoInput.click());
+dropZoneVideo.addEventListener('click', () => videoInput.click());
+videoInput.addEventListener('change', () => { if (videoInput.files[0]) setVideoFile(videoInput.files[0]); });
+dropZoneVideo.addEventListener('drop', e => {
+  e.preventDefault();
+  if (e.dataTransfer.files[0]) setVideoFile(e.dataTransfer.files[0]);
+});
+dropZoneVideo.addEventListener('dragover', e => e.preventDefault());
+
+function setVideoFile(file) {
+  videoFile = file;
+  dropZoneVideo.innerHTML = `
+    <span class="material-symbols-outlined text-3xl text-[#00bfae] mb-1">check_circle</span>
+    <p class="text-white font-medium mt-2">${file.name}</p>
+    <p class="text-gray-500 text-xs mt-1">${(file.size/1024/1024).toFixed(2)} MB · <span class="text-[#00bfae] underline cursor-pointer">Change</span></p>`;
+  // Re-attach the input (innerHTML replacement detaches it from the DOM)
+  dropZoneVideo.appendChild(videoInput);
+  const preview = document.getElementById('video-preview');
+  preview.src = URL.createObjectURL(file);
+  document.getElementById('video-preview-wrap').classList.remove('hidden');
+  btnAnalyseVideo.disabled = false;
+}
+
+btnAnalyseVideo.addEventListener('click', () => analyseVideo());
+
+// ── Webcam tabs ──────────────────────────────────────────────────────────────
+document.getElementById('tab-capture').addEventListener('click', () => {
+  document.getElementById('webcam-capture').classList.remove('hidden');
+  document.getElementById('webcam-live').classList.add('hidden');
+  document.getElementById('tab-capture').className = 'btn-accent text-sm px-4 py-2';
+  document.getElementById('tab-live').className = 'btn-secondary text-sm px-4 py-2';
+  stopLive();
+});
+document.getElementById('tab-live').addEventListener('click', () => {
+  document.getElementById('webcam-capture').classList.add('hidden');
+  document.getElementById('webcam-live').classList.remove('hidden');
+  document.getElementById('tab-live').className = 'btn-accent text-sm px-4 py-2';
+  document.getElementById('tab-capture').className = 'btn-secondary text-sm px-4 py-2';
+  stopCamera();
+});
+
+// ── Camera capture ───────────────────────────────────────────────────────────
+document.getElementById('btn-start-camera').addEventListener('click', async () => {
+  try {
+    cameraStream = await navigator.mediaDevices.getUserMedia({ video: true });
+    const vid = document.getElementById('capture-video');
+    vid.srcObject = cameraStream;
+    document.getElementById('btn-take-photo').disabled = false;
+  } catch(e) { showError('Camera access denied: ' + e.message); }
+});
+
+document.getElementById('btn-take-photo').addEventListener('click', () => {
+  const vid = document.getElementById('capture-video');
+  const canvas = document.getElementById('capture-canvas');
+  canvas.width = vid.videoWidth;
+  canvas.height = vid.videoHeight;
+  canvas.getContext('2d').drawImage(vid, 0, 0);
+  capturedImageB64 = canvas.toDataURL('image/jpeg', 0.92);
+  const preview = document.getElementById('captured-preview');
+  preview.src = capturedImageB64;
+  preview.classList.remove('hidden');
+  document.getElementById('btn-analyse-capture').classList.remove('hidden');
+});
+
+document.getElementById('btn-analyse-capture').addEventListener('click', () => {
+  if (!capturedImageB64) return;
+  analyseCaptured();
+});
+
+function stopCamera() {
+  if (cameraStream) { cameraStream.getTracks().forEach(t => t.stop()); cameraStream = null; }
+}
+
+// ── Live stream ───────────────────────────────────────────────────────────────
+const liveFaceCount = document.getElementById('live-face-count');
+let liveRequestPending = false;
+
+document.getElementById('btn-start-live').addEventListener('click', async () => {
+  try {
+    liveStream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } });
+    const vid = document.getElementById('live-video');
+    vid.srcObject = liveStream;
+    const canvas = document.getElementById('live-canvas');
+    const ctx = canvas.getContext('2d');
+    document.getElementById('btn-stop-live').disabled = false;
+    document.getElementById('btn-start-live').disabled = true;
+    liveRequestPending = false;
+
+    // Wait for video dimensions to be available before starting
+    await new Promise(resolve => {
+      if (vid.readyState >= 2) { resolve(); }
+      else { vid.addEventListener('loadeddata', resolve, { once: true }); }
+    });
+    canvas.width = vid.videoWidth || 640;
+    canvas.height = vid.videoHeight || 480;
+
+    // Recursive loop — always waits for the previous request to finish
+    async function sendFrame() {
+      if (!liveStream) return;
+      if (!liveRequestPending) {
+        ctx.drawImage(vid, 0, 0, canvas.width, canvas.height);
+        const frameB64 = canvas.toDataURL('image/jpeg', 0.65);
+        liveRequestPending = true;
+        try {
+          const resp = await fetch('/api/stream/frame', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              frame_b64: frameB64,
+              backbone: document.getElementById('backbone').value,
+              conf: parseFloat(document.getElementById('conf').value),
+            })
+          });
+          const data = await resp.json();
+          if (data.annotated_b64) {
+            const img = new Image();
+            img.onload = () => {
+              canvas.width = img.naturalWidth || canvas.width;
+              canvas.height = img.naturalHeight || canvas.height;
+              ctx.drawImage(img, 0, 0);
+            };
+            img.src = data.annotated_b64;
+          }
+          if (data.face_count !== undefined) {
+            liveFaceCount.textContent = `Faces detected: ${data.face_count}`;
+          }
+        } catch(e) { /* ignore individual frame errors */ }
+        liveRequestPending = false;
+      }
+      if (liveStream) liveInterval = setTimeout(sendFrame, 80);
+    }
+
+    liveInterval = setTimeout(sendFrame, 0);
+  } catch(e) { showError('Camera access denied: ' + e.message); }
+});
+
+document.getElementById('btn-stop-live').addEventListener('click', stopLive);
+
+function stopLive() {
+  if (liveInterval) { clearTimeout(liveInterval); liveInterval = null; }
+  liveRequestPending = false;
+  if (liveStream) { liveStream.getTracks().forEach(t => t.stop()); liveStream = null; }
+  document.getElementById('btn-start-live').disabled = false;
+  document.getElementById('btn-stop-live').disabled = true;
+  liveFaceCount.textContent = '';
+}
+
+// ── Model status ──────────────────────────────────────────────────────────────
+document.getElementById('btn-model-status').addEventListener('click', async () => {
+  const panel = document.getElementById('model-status-panel');
+  panel.classList.remove('hidden');
+  panel.innerHTML = '<div class="text-gray-500">Checking…</div>';
+  const resp = await fetch('/api/models/status');
+  const data = await resp.json();
+  panel.innerHTML = Object.entries(data.models).map(([name, s]) =>
+    `<div class="flex items-center gap-2">
+      <span class="material-symbols-outlined text-sm ${s.valid ? 'text-green-400' : 'text-red-400'}">${s.valid ? 'check_circle' : 'cancel'}</span>
+      <span class="text-gray-400 truncate">${name}</span>
+    </div>`
+  ).join('');
+});
+
+// ── Core API calls ────────────────────────────────────────────────────────────
+async function analyseImage() {
+  if (!imageFile) return;
+  setLoading(true, 'Detecting faces and predicting ages…');
+  const fd = buildFormData();
+  fd.append('file', imageFile);
+  showOriginal(URL.createObjectURL(imageFile));
+  const data = await postForm('/api/predict', fd);
+  setLoading(false);
+  if (data.error) { showError(data.error); return; }
+  renderResults(data);
+}
+
+async function analyseVideo() {
+  if (!videoFile) return;
+  setLoading(true, 'Uploading and processing video… this may take several minutes');
+  const fd = buildFormData();
+  fd.append('file', videoFile);
+  fd.append('max_frames', document.getElementById('max-frames').value);
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 12 * 60 * 1000); // 12 min client timeout
+  try {
+    const resp = await fetch('/api/predict/video', { method: 'POST', body: fd, signal: controller.signal });
+    clearTimeout(timeoutId);
+    const data = await resp.json();
+    setLoading(false);
+    if (data.error) { showError(data.error); return; }
+    renderVideoResults(data);
+  } catch(e) {
+    clearTimeout(timeoutId);
+    setLoading(false);
+    if (e.name === 'AbortError') showError('Video processing timed out (>12 min). Try reducing Max Frames in the sidebar.');
+    else showError(e.message);
+  }
+}
+
+function dataURLtoBlob(dataURL) {
+  const [header, b64] = dataURL.split(',');
+  const mime = header.match(/:(.*?);/)[1];
+  const bytes = atob(b64);
+  const arr = new Uint8Array(bytes.length);
+  for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i);
+  return new Blob([arr], { type: mime });
+}
+
+async function analyseCaptured() {
+  if (!capturedImageB64) return;
+  setLoading(true, 'Analysing captured photo…');
+  const blob = dataURLtoBlob(capturedImageB64);
+  const file = new File([blob], 'capture.jpg', { type: 'image/jpeg' });
+  const fd = buildFormData();
+  fd.append('file', file);
+  showOriginal(capturedImageB64);
+  const data = await postForm('/api/predict', fd);
+  setLoading(false);
+  if (data.error) { showError(data.error); return; }
+  renderResults(data);
+}
+
+function buildFormData() {
+  const fd = new FormData();
+  fd.append('backbone', document.getElementById('backbone').value);
+  fd.append('conf', document.getElementById('conf').value);
+  const useVlm = document.getElementById('use-vlm').checked;
+  fd.append('use_vlm', useVlm ? 'true' : 'false');
+  if (useVlm) fd.append('openai_key', document.getElementById('openai-key').value);
+  return fd;
+}
+
+async function postForm(url, formData) {
+  try {
+    const resp = await fetch(url, { method: 'POST', body: formData });
+    return await resp.json();
+  } catch(e) {
+    return { error: e.message };
+  }
+}
+
+// ── Render helpers ────────────────────────────────────────────────────────────
+function showOriginal(src) {
+  document.getElementById('original-img').src = src;
+}
+
+function renderResults(data) {
+  const section = document.getElementById('results-section');
+  section.classList.remove('hidden');
+  document.getElementById('error-state').classList.add('hidden');
+  document.getElementById('video-download-wrap').classList.add('hidden');
+
+  if (data.annotated_b64)
+    document.getElementById('annotated-img').src = 'data:image/jpeg;base64,' + data.annotated_b64;
+
+  renderSummary(data.summary);
+  renderFaceCards(data.faces);
+  renderSummaryTable(data.faces);
+}
+
+function renderVideoResults(data) {
+  const section = document.getElementById('results-section');
+  section.classList.remove('hidden');
+  document.getElementById('error-state').classList.add('hidden');
+  document.getElementById('annotated-img').src = '';
+  document.getElementById('original-img').src = '';
+
+  if (data.download_url) {
+    document.getElementById('video-download-wrap').classList.remove('hidden');
+    document.getElementById('video-download-link').href = data.download_url;
+  }
+
+  const s = data.summary;
+  const fakeSummary = {
+    total_faces: s.total_face_detections,
+    counts: s.group_counts,
+    percentages: s.group_percentages,
+    avg_age: s.avg_age,
+    min_age: s.min_age,
+    max_age: s.max_age,
+    has_minors: s.has_minors,
+    overall_decision: s.has_minors ? 'restrict' : 'allow',
+  };
+  renderSummary(fakeSummary);
+  document.getElementById('face-cards').innerHTML = '<p class="text-gray-500 text-sm col-span-4">Per-face cards not available for video mode — see stats above.</p>';
+  document.getElementById('summary-table-body').innerHTML = '';
+}
+
+function renderSummary(s) {
+  if (!s) return;
+  document.getElementById('stat-total').textContent = s.total_faces;
+  document.getElementById('stat-child').textContent = s.counts.child;
+  document.getElementById('stat-teen').textContent = s.counts.teen;
+  document.getElementById('stat-adult').textContent = s.counts.adult;
+  document.getElementById('pct-child').textContent = s.percentages.child + '%';
+  document.getElementById('pct-teen').textContent = s.percentages.teen + '%';
+  document.getElementById('pct-adult').textContent = s.percentages.adult + '%';
+  document.getElementById('bar-child').style.width = s.percentages.child + '%';
+  document.getElementById('bar-teen').style.width = s.percentages.teen + '%';
+  document.getElementById('bar-adult').style.width = s.percentages.adult + '%';
+  document.getElementById('stat-avg-age').textContent = s.avg_age + ' yr';
+  document.getElementById('stat-min-age').textContent = s.min_age + ' yr';
+  document.getElementById('stat-max-age').textContent = s.max_age + ' yr';
+
+  const banner = document.getElementById('overall-decision-banner');
+  banner.classList.remove('hidden');
+  if (s.overall_decision === 'allow') {
+    banner.className = 'mt-4 rounded-xl p-3 text-center font-bold text-sm bg-green-900/30 text-green-300 border border-green-800/40';
+    banner.innerHTML = '✅ Overall Decision: ALLOW — All detected faces are adults';
+  } else {
+    banner.className = 'mt-4 rounded-xl p-3 text-center font-bold text-sm bg-red-900/30 text-red-300 border border-red-800/40';
+    banner.innerHTML = `🚫 Overall Decision: RESTRICT — ${s.counts.child + s.counts.teen} minor(s) detected`;
+  }
+}
+
+function renderFaceCards(faces) {
+  const container = document.getElementById('face-cards');
+  if (!faces || !faces.length) {
+    container.innerHTML = '<p class="text-gray-500 text-sm">No faces detected.</p>';
+    return;
+  }
+  container.innerHTML = faces.map(f => {
+    const decisionTag = f.decision === 'allow'
+      ? '<span class="tag-allow">✅ ALLOW</span>'
+      : '<span class="tag-restrict">🚫 RESTRICT</span>';
+    const groupTag = `<span class="tag-${f.age_group}">${f.age_group.charAt(0).toUpperCase() + f.age_group.slice(1)}</span>`;
+    const cropImg = f.crop_b64 ? `<img src="data:image/jpeg;base64,${f.crop_b64}" class="w-full h-36 object-cover rounded-lg mb-3"/>` : '';
+
+    const groupProbs = f.group_probs ? `
+      <div class="mt-3 space-y-1.5">
+        ${Object.entries(f.group_probs).map(([g, p]) => `
+          <div>
+            <div class="flex justify-between text-xs text-gray-500 mb-0.5"><span>${g}</span><span>${(p*100).toFixed(1)}%</span></div>
+            <div class="w-full bg-[#0f1117] rounded-full h-1.5"><div class="bg-[#00bfae] h-1.5 rounded-full" style="width:${(p*100).toFixed(1)}%"></div></div>
+          </div>`).join('')}
+      </div>` : '';
+
+    const vlmSection = f.vlm && f.vlm.vlm_age_estimate ? `
+      <div class="mt-3 pt-3 border-t border-[#2a2d3a]">
+        <p class="text-xs text-gray-500 mb-1 font-semibold">VLM Reasoning</p>
+        <p class="text-xs text-gray-300"><span class="font-semibold text-white">Age:</span> ${f.vlm.vlm_age_estimate}yr &nbsp; <span class="font-semibold text-white">Group:</span> ${f.vlm.age_group}</p>
+        <p class="text-xs text-gray-400 mt-1 italic">${f.vlm.reasoning || ''}</p>
+      </div>` : '';
+
+    return `<div class="card p-4">
+      ${cropImg}
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-xs text-gray-500 font-mono">Face #${f.id}</span>
+        ${decisionTag}
+      </div>
+      <div class="flex items-end gap-2 mb-2">
+        <span class="text-2xl font-black text-white">${f.predicted_age}</span>
+        <span class="text-sm text-gray-400 mb-1">years</span>
+        ${groupTag}
+      </div>
+      <div class="text-xs text-gray-500">CNN Confidence: <span class="text-[#00bfae] font-semibold">${(f.confidence*100).toFixed(1)}%</span></div>
+      ${groupProbs}
+      ${vlmSection}
+    </div>`;
+  }).join('');
+}
+
+function renderSummaryTable(faces) {
+  const tbody = document.getElementById('summary-table-body');
+  if (!faces || !faces.length) { tbody.innerHTML = ''; return; }
+  tbody.innerHTML = faces.map(f => `
+    <tr class="hover:bg-[#1a1d27] transition-colors">
+      <td class="py-2.5 px-3 font-mono text-gray-400">#${f.id}</td>
+      <td class="py-2.5 px-3 font-bold text-white">${f.predicted_age} yr</td>
+      <td class="py-2.5 px-3"><span class="tag-${f.age_group}">${f.age_group}</span></td>
+      <td class="py-2.5 px-3 text-[#00bfae] font-mono">${(f.confidence*100).toFixed(1)}%</td>
+      <td class="py-2.5 px-3">${f.decision === 'allow' ? '<span class="tag-allow">✅ Allow</span>' : '<span class="tag-restrict">🚫 Restrict</span>'}</td>
+      <td class="py-2.5 px-3 text-gray-500 text-xs">${f.detection_method || '—'}</td>
+      <td class="py-2.5 px-3 text-gray-400">${f.vlm && f.vlm.vlm_age_estimate ? f.vlm.vlm_age_estimate + ' yr' : '—'}</td>
+    </tr>`).join('');
+}
+
+function setLoading(show, msg = 'Processing…') {
+  document.getElementById('loading-state').classList.toggle('hidden', !show);
+  document.getElementById('loading-msg').textContent = msg;
+  if (show) {
+    document.getElementById('results-section').classList.add('hidden');
+    document.getElementById('error-state').classList.add('hidden');
+  }
+}
+
+function showError(msg) {
+  document.getElementById('error-state').classList.remove('hidden');
+  document.getElementById('error-msg').textContent = msg;
+  document.getElementById('results-section').classList.add('hidden');
+  document.getElementById('loading-state').classList.add('hidden');
+}
+</script>
+{% endblock %}
