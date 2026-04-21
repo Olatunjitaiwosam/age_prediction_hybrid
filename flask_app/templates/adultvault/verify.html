@@ -206,16 +206,22 @@ let uploadedFile = null;
 const confSlider = document.getElementById('conf');
 confSlider.addEventListener('input', () => document.getElementById('conf-val').textContent = parseFloat(confSlider.value).toFixed(2));
 
-document.getElementById('btn-start-cam').addEventListener('click', async () => {
+async function startCamera() {
   try {
     stream = await navigator.mediaDevices.getUserMedia({ video: true });
     const vid = document.getElementById('cam-video');
     vid.srcObject = stream;
     vid.classList.remove('hidden');
     document.getElementById('cam-placeholder').classList.add('hidden');
+    document.getElementById('btn-start-cam').classList.add('hidden');
     document.getElementById('btn-capture').disabled = false;
-  } catch(e) { alert('Camera access denied: ' + e.message); }
-});
+  } catch(e) {
+    document.getElementById('btn-start-cam').classList.remove('hidden');
+  }
+}
+
+document.getElementById('btn-start-cam').addEventListener('click', startCamera);
+window.addEventListener('load', startCamera);
 
 document.getElementById('btn-capture').addEventListener('click', () => {
   const vid = document.getElementById('cam-video');

@@ -236,7 +236,7 @@ document.getElementById('btn-login-next').addEventListener('click', () => {
   document.getElementById('age-verify-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
 });
 
-document.getElementById('btn-start-cam').addEventListener('click', async () => {
+async function startCamera() {
   try {
     stream = await navigator.mediaDevices.getUserMedia({ video: true });
     const vid = document.getElementById('cam-video');
@@ -244,8 +244,13 @@ document.getElementById('btn-start-cam').addEventListener('click', async () => {
     vid.classList.remove('hidden');
     document.getElementById('cam-placeholder').classList.add('hidden');
     document.getElementById('btn-capture').disabled = false;
-  } catch(e) { alert('Camera denied: ' + e.message); }
-});
+  } catch(e) {
+    document.getElementById('btn-start-cam').classList.remove('hidden');
+  }
+}
+
+document.getElementById('btn-start-cam').addEventListener('click', startCamera);
+window.addEventListener('load', startCamera);
 
 document.getElementById('btn-capture').addEventListener('click', () => {
   const vid = document.getElementById('cam-video');
