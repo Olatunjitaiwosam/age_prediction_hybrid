@@ -351,7 +351,11 @@ function setMode(mode) {
     document.getElementById(`panel-${m}`).classList.toggle('hidden', m !== mode);
   });
   document.getElementById('video-options').classList.toggle('hidden', mode !== 'video');
-  if (mode !== 'webcam') stopCamera();
+  if (mode === 'webcam') {
+    startCaptureCamera();
+  } else {
+    stopCamera();
+  }
 }
 
 document.querySelectorAll('.mode-btn').forEach(label => {
@@ -363,9 +367,11 @@ const confSlider = document.getElementById('conf');
 const confVal = document.getElementById('conf-val');
 confSlider.addEventListener('input', () => confVal.textContent = parseFloat(confSlider.value).toFixed(2));
 
-// ── VLM toggle ──────────────────────────────────────────────────────────────
+// ── VLM toggle — always on; key is stored server-side ───────────────────────
+document.getElementById('use-vlm').checked = true;
+document.getElementById('vlm-key-wrap').classList.add('hidden');
 document.getElementById('use-vlm').addEventListener('change', function() {
-  document.getElementById('vlm-key-wrap').classList.toggle('hidden', !this.checked);
+  document.getElementById('vlm-key-wrap').classList.add('hidden');
 });
 
 // ── Image upload ────────────────────────────────────────────────────────────
@@ -443,14 +449,19 @@ document.getElementById('tab-live').addEventListener('click', () => {
 });
 
 // ── Camera capture ───────────────────────────────────────────────────────────
-document.getElementById('btn-start-camera').addEventListener('click', async () => {
+async function startCaptureCamera() {
+  if (cameraStream) return;
   try {
     cameraStream = await navigator.mediaDevices.getUserMedia({ video: true });
     const vid = document.getElementById('capture-video');
     vid.srcObject = cameraStream;
+    document.getElementById('btn-start-camera').classList.add('hidden');
     document.getElementById('btn-take-photo').disabled = false;
-  } catch(e) { showError('Camera access denied: ' + e.message); }
-});
+  } catch(e) {
+    document.getElementById('btn-start-camera').classList.remove('hidden');
+  }
+}
+document.getElementById('btn-start-camera').addEventListener('click', startCaptureCamera);
 
 document.getElementById('btn-take-photo').addEventListener('click', () => {
   const vid = document.getElementById('capture-video');
