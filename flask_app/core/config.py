@@ -13,8 +13,8 @@ class Config:
     IMAGENET_MEAN = [0.485, 0.456, 0.406]
     IMAGENET_STD  = [0.229, 0.224, 0.225]
 
-    DEFAULT_BACKBONE = os.environ.get("MODEL_BACKBONE", "densenet")
-    CNN_FILENAME     = os.environ.get("CNN_FILENAME",  "densenet_best.pth")
+    DEFAULT_BACKBONE = os.environ.get("MODEL_BACKBONE", "vit-base")
+    CNN_FILENAME     = os.environ.get("CNN_FILENAME",  "vit_base_best.pth")
     YOLO_FILENAME    = os.environ.get("YOLO_FILENAME", "yolo_face_best.pt")
 
     BACKBONE_FILES = {
