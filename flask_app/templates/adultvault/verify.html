@@ -189,6 +189,20 @@
             Faces: <span id="av-total-faces" class="text-on-surface font-semibold">—</span>
           </div>
         </div>
+
+        <!-- VLM Reasoning -->
+        <div id="vlm-panel" class="hidden mt-4 rounded-lg bg-[#0f1117] border border-[#2a2d3a] p-4">
+          <p class="text-[10px] uppercase tracking-widest text-[#00bfae] font-semibold mb-2">AI Reasoning (GPT-4.1)</p>
+          <div class="flex items-center gap-3 mb-2">
+            <span class="text-sm text-white font-bold">Age: <span id="vlm-age">—</span> yr</span>
+            <span class="text-xs text-on-surface-variant">·</span>
+            <span class="text-sm text-white">Group: <span id="vlm-group" class="font-bold">—</span></span>
+            <span class="text-xs text-on-surface-variant">·</span>
+            <span class="text-xs text-on-surface-variant">Confidence: <span id="vlm-conf" class="text-white">—</span>%</span>
+          </div>
+          <p id="vlm-reasoning" class="text-xs text-gray-300 italic mb-2"></p>
+          <div id="vlm-indicators" class="flex flex-wrap gap-1"></div>
+        </div>
       </div>
 
       <p class="text-[10px] text-on-surface-variant/50 text-center mt-auto pt-4">
@@ -294,6 +308,19 @@ document.getElementById('btn-verify').addEventListener('click', async () => {
 
       if (data.annotated_b64) {
         document.getElementById('cam-result').src = 'data:image/jpeg;base64,' + data.annotated_b64;
+      }
+
+      const vlm = data.faces && data.faces[0] && data.faces[0].vlm;
+      if (vlm && vlm.vlm_age_estimate) {
+        document.getElementById('vlm-age').textContent = vlm.vlm_age_estimate;
+        document.getElementById('vlm-group').textContent = vlm.age_group || '—';
+        document.getElementById('vlm-conf').textContent = vlm.confidence || '—';
+        document.getElementById('vlm-reasoning').textContent = vlm.reasoning || '';
+        const indEl = document.getElementById('vlm-indicators');
+        indEl.innerHTML = (vlm.key_indicators || []).map(i =>
+          `<span class="text-[10px] bg-[#1a1d27] border border-[#2a2d3a] rounded px-2 py-0.5 text-gray-400">${i}</span>`
+        ).join('');
+        document.getElementById('vlm-panel').classList.remove('hidden');
       }
     }
   } catch(e) {
